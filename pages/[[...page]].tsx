@@ -9,17 +9,21 @@ builder.init('080513e0d5ae4bf78ed0b86e8ac876c6');
 
 export async function getStaticProps({ params }: { params: any }) {
   // Fetch the builder content
-  const page = await builder
-    .get('page', {
-      userAttributes: {
-        urlPath: '/' + (params?.page?.join('/') || ''),
-      },
-    })
-    .toPromise();
+  const [page, header] = await Promise.all([
+    builder
+      .get('page', {
+        userAttributes: {
+          urlPath: '/' + (params?.page?.join('/') || ''),
+        },
+      })
+      .toPromise(),
+    builder.get('header', { options: { noTargeting: true } }).toPromise(),
+  ]);
 
   return {
     props: {
       page: page || null,
+      header: header || null,
     },
     revalidate: 5,
   };
@@ -39,7 +43,7 @@ export async function getStaticPaths() {
   };
 }
 
-export default function Page({ page }: { page: any }) {
+export default function Page({ page, header }: { page: any; header: any }) {
   const router = useRouter();
   const isPreviewing = useIsPreviewing();
 
@@ -57,6 +61,7 @@ export default function Page({ page }: { page: any }) {
         <title>{page?.data.title}</title>
       </Head>
       {/* Render the Builder page */}
+      <BuilderComponent model="header" content={header} />
       <BuilderComponent model="page" content={page} />
     </>
   );
